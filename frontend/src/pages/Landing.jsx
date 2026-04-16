@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Users } from 'lucide-react';
+import vibeconLogo from '../assets/vibecon-logo.svg';
 
-const SPONSORS = ['Emergent', 'Y Combinator', 'OpenAI', 'MongoDB', 'Stripe', 'AWS'];
+const SPONSORS = ['Emergent', 'Polaris School of Technology', 'OpenAI', 'MongoDB', 'Stripe', 'AWS'];
 
 const fakeCards = [
   { name: 'Aanya', text: 'Day 1 at #vibecon2026 ⚡', color: '#FF6347' },
@@ -21,8 +22,7 @@ export default function Landing() {
       {/* Top nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-5">
         <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-vibe-orange flex items-center justify-center text-white font-black">V</div>
-          <span className="font-black text-lg tracking-tight">VibeCon 2026</span>
+          <img src={vibeconLogo} alt="VibeCon" className="h-8" />
         </div>
         <Link
           to="/login"
@@ -41,7 +41,7 @@ export default function Landing() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white shadow-sm text-xs font-bold mb-6">
             <Sparkles size={14} className="text-vibe-orange" />
-            April 16, 2026 · LIVE Wall
+            April 16, 2026 · Emergent x Polaris · LIVE Wall
           </div>
 
           <h1 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight">

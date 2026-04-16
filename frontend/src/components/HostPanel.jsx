@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Link2, Monitor, QrCode, Settings, Download, X, Hash, Minus, Plus, Check, Loader2 } from 'lucide-react';
-import { apiPostJson } from '../utils/api.js';
+import { supabase } from '../utils/supabase.js';
+import { extractActivityId } from '../utils/parseLinkedin.js';
 
 const QR_BASE = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=';
 
@@ -11,14 +12,11 @@ export default function HostPanel({ onDisplayMode, onLogout, postCount, setPostC
   const [showAddPost, setShowAddPost] = useState(false);
   const [showCount, setShowCount] = useState(false);
 
-  // Add post form state
-  const [linkName, setLinkName] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [linkSubmitting, setLinkSubmitting] = useState(false);
   const [linkError, setLinkError] = useState('');
   const [linkSuccess, setLinkSuccess] = useState(false);
 
-  // Count edit state
   const [countInput, setCountInput] = useState('');
 
   const guideUrl = `${window.location.origin}/guide`;
@@ -41,20 +39,29 @@ export default function HostPanel({ onDisplayMode, onLogout, postCount, setPostC
     e.preventDefault();
     setLinkError('');
     setLinkSuccess(false);
-    if (!linkUrl.trim() || !linkName.trim()) {
-      setLinkError('Name and URL are required.');
+    if (!linkUrl.trim()) {
+      setLinkError('LinkedIn URL is required.');
       return;
     }
+
+    const activityId = extractActivityId(linkUrl.trim());
+    if (!activityId) {
+      setLinkError('Could not extract post ID from URL.');
+      return;
+    }
+
     setLinkSubmitting(true);
     try {
-      await apiPostJson('/api/posts', {
-        name: linkName.trim(),
+      const { error } = await supabase.from('posts').insert({
+        name: 'Admin',
         linkedin_url: linkUrl.trim(),
+        activity_id: activityId,
         composed_text: '',
+        scraped_meta: null,
       });
+      if (error) throw new Error(error.message);
       setLinkSuccess(true);
       setLinkUrl('');
-      setLinkName('');
       setTimeout(() => setLinkSuccess(false), 2000);
     } catch (err) {
       setLinkError(err.message || 'Failed to add post.');
@@ -88,7 +95,6 @@ export default function HostPanel({ onDisplayMode, onLogout, postCount, setPostC
               </button>
             </div>
 
-            {/* Add Post */}
             <button
               onClick={() => setShowAddPost((v) => !v)}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold transition"
@@ -104,15 +110,9 @@ export default function HostPanel({ onDisplayMode, onLogout, postCount, setPostC
                 className="bg-white/10 rounded-lg p-3 space-y-2"
               >
                 <input
-                  value={linkName}
-                  onChange={(e) => setLinkName(e.target.value)}
-                  placeholder="Name"
-                  className="w-full px-3 py-1.5 rounded-md bg-white/10 border border-white/20 text-sm font-semibold placeholder:text-white/40 focus:outline-none focus:border-white/50"
-                />
-                <input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="LinkedIn post URL"
+                  placeholder="Paste LinkedIn post URL"
                   className="w-full px-3 py-1.5 rounded-md bg-white/10 border border-white/20 text-sm font-semibold placeholder:text-white/40 focus:outline-none focus:border-white/50"
                 />
                 {linkError && (
@@ -134,7 +134,6 @@ export default function HostPanel({ onDisplayMode, onLogout, postCount, setPostC
               </motion.form>
             )}
 
-            {/* Count Control */}
             <button
               onClick={() => { setShowCount((v) => !v); setCountInput(String(postCount)); }}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold transition"

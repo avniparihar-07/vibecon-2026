@@ -1,16 +1,7 @@
 import { motion } from 'framer-motion';
-import { ExternalLink, Heart, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 const COLORS = ['#FF6347', '#0A66C2', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'];
-
-const initialsOf = (name) =>
-  (name || '?')
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
 
 const colorFor = (id) => {
   if (!id) return COLORS[0];
@@ -19,72 +10,11 @@ const colorFor = (id) => {
   return COLORS[h % COLORS.length];
 };
 
-// Lightweight inline highlighter for @mentions and #hashtags. The post text
-// from LinkedIn's embed already inlines the mention as plain text — we just
-// recolor the tokens for visual punch on the wall.
-function highlight(text, theme) {
-  if (!text) return null;
-  const parts = text.split(/(\s+)/);
-  return parts.map((part, i) => {
-    if (/^[@#]\w/.test(part)) {
-      return (
-        <span key={i} style={{ color: theme.accent, fontWeight: 700 }}>
-          {part}
-        </span>
-      );
-    }
-    return part;
-  });
-}
-
-const LinkedInBadge = ({ size = 18 }) => (
-  <span
-    className="inline-flex items-center justify-center rounded-sm font-black text-white"
-    style={{
-      width: size,
-      height: size,
-      backgroundColor: '#0A66C2',
-      fontSize: Math.round(size * 0.65),
-      lineHeight: 1,
-    }}
-    aria-label="LinkedIn"
-  >
-    in
-  </span>
-);
-
-function Avatar({ avatarUrl, name, color }) {
-  const [errored, setErrored] = useState(false);
-  if (avatarUrl && !errored) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name || ''}
-        onError={() => setErrored(true)}
-        referrerPolicy="no-referrer"
-        className="h-12 w-12 rounded-full object-cover bg-gray-100 ring-2 ring-white shadow-sm"
-      />
-    );
-  }
-  return (
-    <div
-      className="h-12 w-12 rounded-full flex items-center justify-center font-black text-white text-lg ring-2 ring-white shadow-sm"
-      style={{ backgroundColor: color }}
-    >
-      {initialsOf(name)}
-    </div>
-  );
-}
-
 export default function PostCard({ post, theme, displayMode, onDelete }) {
-  const meta = post.scraped_meta || {};
-  const author = meta.author_name || post.name || 'Anonymous';
-  const headline = meta.author_headline || '';
-  const text = meta.post_text || post.composed_text || '';
-  const image = meta.post_image_url || null;
-  const likes = meta.likes;
-  const time = meta.posted_relative || 'just now';
   const accentColor = post.color || colorFor(post.id);
+  const embedUrl = post.activity_id
+    ? `https://www.linkedin.com/embed/feed/update/urn:li:activity:${post.activity_id}`
+    : null;
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -131,70 +61,20 @@ export default function PostCard({ post, theme, displayMode, onDelete }) {
         </motion.div>
       )}
 
-      <div className="flex items-start gap-3 p-4 pb-2">
-        <Avatar avatarUrl={meta.author_avatar_url} name={author} color={accentColor} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="font-black text-[15px] truncate" style={{ color: theme.cardText }}>
-              {author}
-            </span>
-            <LinkedInBadge size={16} />
-          </div>
-          {headline && (
-            <p className="text-xs font-semibold opacity-70 truncate" style={{ color: theme.cardText }}>
-              {headline}
-            </p>
-          )}
-          <p className="text-[10px] font-bold opacity-50 mt-0.5" style={{ color: theme.cardText }}>
-            {time}
+      {embedUrl ? (
+        <iframe
+          src={embedUrl}
+          title="LinkedIn post"
+          className="w-full h-full border-0 rounded-2xl"
+          allowFullScreen
+        />
+      ) : (
+        <div className="flex-1 p-4 overflow-hidden">
+          <p className="text-sm font-semibold whitespace-pre-wrap break-words" style={{ color: theme.cardText }}>
+            {post.composed_text || post.name || ''}
           </p>
         </div>
-      </div>
-
-      <div className="px-4 pb-2 flex-1 overflow-hidden">
-        <p
-          className="text-[13px] leading-snug font-semibold whitespace-pre-wrap break-words line-clamp-[8]"
-          style={{ color: theme.cardText }}
-        >
-          {highlight(text, { accent: accentColor })}
-        </p>
-      </div>
-
-      {image && (
-        <div className="px-4 pb-2">
-          <img
-            src={image}
-            alt=""
-            referrerPolicy="no-referrer"
-            className="w-full h-20 object-cover rounded-md"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </div>
       )}
-
-      <div
-        className="flex items-center justify-between px-4 py-2 border-t text-[11px] font-bold"
-        style={{ borderColor: theme.cardBorder, color: theme.cardText, opacity: 0.75 }}
-      >
-        <span className="flex items-center gap-1">
-          <Heart size={12} />
-          {likes != null ? likes.toLocaleString() : '—'}
-        </span>
-        {post.linkedin_url && post.linkedin_url !== '#' ? (
-          <a
-            href={post.linkedin_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 hover:underline"
-          >
-            View <ExternalLink size={11} />
-          </a>
-        ) : (
-          <span className="opacity-60">#vibecon2026</span>
-        )}
-      </div>
     </motion.div>
   );
 }

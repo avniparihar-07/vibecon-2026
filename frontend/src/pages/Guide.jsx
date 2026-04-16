@@ -2,22 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Copy, ExternalLink, ArrowRight } from 'lucide-react';
-import { apiPostJson } from '../utils/api.js';
-import { isValidLinkedInPostUrl } from '../utils/parseLinkedin.js';
+import { supabase } from '../utils/supabase.js';
+import { extractActivityId, isValidLinkedInPostUrl } from '../utils/parseLinkedin.js';
 
 const LINKEDIN_SHARE_URL =
   'https://www.linkedin.com/sharing/share-offsite/?url=https://vibecon.com';
 
 const buildTemplate = (name) =>
-  `Day 1 at #vibecon2026 ⚡
+  `Day 1 at #VibeCon2026 ⚡
 
 300 builders. One room. One wall. ${name ? name + ' here — ' : ''}feeling lucky to be in the room with the most ambitious people I have ever met.
 
-Big shoutout to @Emergent and @YCombinator for putting this together.
+Big shoutout to @Emergent and @PolarisSchoolofTechnology for putting this together. This is what building looks like.
 
 If you're building, ship something today. The bar just moved. 🚀
 
-#vibecon2026 #buildinpublic`;
+#VibeCon2026 #VibeCon #buildinpublic`;
 
 export default function Guide() {
   const navigate = useNavigate();
@@ -33,14 +33,12 @@ export default function Guide() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Auto-personalize template when name changes (unless user has edited it).
   useEffect(() => {
     if (!textWasEdited) {
       setText(buildTemplate(name));
     }
   }, [name, textWasEdited]);
 
-  // Debounced persistence of composed text to localStorage.
   useEffect(() => {
     const id = setTimeout(() => {
       localStorage.setItem('vibecon_composed_text', text);
@@ -59,9 +57,7 @@ export default function Guide() {
     if (!canShare) return;
     try {
       await navigator.clipboard.writeText(text);
-    } catch {
-      // Clipboard may be denied — still proceed.
-    }
+    } catch {}
     localStorage.setItem('vibecon_user', name.trim());
     localStorage.setItem('vibecon_composed_text', text);
     window.open(LINKEDIN_SHARE_URL, '_blank', 'noopener,noreferrer');
@@ -74,16 +70,24 @@ export default function Guide() {
     e.preventDefault();
     setSubmitError('');
     if (!urlValid) {
-      setSubmitError('That doesn’t look like a valid LinkedIn post URL.');
+      setSubmitError('That doesn\u2019t look like a valid LinkedIn post URL.');
       return;
     }
+
+    const activityId = extractActivityId(linkedinUrl);
+
     setSubmitting(true);
     try {
-      const data = await apiPostJson('/api/posts', {
-        name: name.trim(),
+      const { data, error } = await supabase.from('posts').insert({
+        name: name.trim() || 'Builder',
         linkedin_url: linkedinUrl.trim(),
+        activity_id: activityId,
         composed_text: text,
-      });
+        scraped_meta: null,
+      }).select().single();
+
+      if (error) throw new Error(error.message);
+
       localStorage.setItem(
         'vibecon_submitted_post',
         JSON.stringify({
@@ -144,7 +148,7 @@ export default function Guide() {
                 className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-vibe-orange focus:outline-none font-semibold text-sm leading-relaxed"
               />
               <p className="mt-1 text-[11px] font-bold text-gray-400">
-                Edit it freely. We save it and use it on the wall as a fallback if scraping fails.
+                Edit it freely. We save it and display it on the wall.
               </p>
             </div>
 
@@ -206,17 +210,6 @@ export default function Guide() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-black uppercase tracking-wider text-gray-600 mb-1.5">
-                  Your name
-                </label>
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border-2 border-gray-200 focus:border-vibe-orange focus:outline-none font-semibold text-sm"
-                />
-              </div>
-
               {submitError && (
                 <p className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-md px-3 py-2">
                   {submitError}
@@ -228,7 +221,7 @@ export default function Guide() {
                 disabled={submitting || !linkedinUrl}
                 className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg bg-vibe-orange text-white font-black shadow-lg shadow-orange-200 hover:scale-[1.01] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {submitting ? 'Adding to wall…' : (
+                {submitting ? 'Adding to wall\u2026' : (
                   <>
                     Add to the Wall <ArrowRight size={18} />
                   </>

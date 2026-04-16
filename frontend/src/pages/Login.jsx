@@ -2,31 +2,23 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
-import { apiPostJson } from '../utils/api.js';
+import vibeconLogo from '../assets/vibecon-logo.svg';
+
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const canSubmit = email.length > 0 && password.length > 0 && !loading;
-
-  const onSubmit = async (e) => {
+  const onSubmit = (e) => {
     e.preventDefault();
-    if (!canSubmit) return;
-    setError('');
-    setLoading(true);
-    try {
-      const data = await apiPostJson('/api/auth/login', { email, password });
-      localStorage.setItem('vibecon_admin_token', data.access_token);
-      navigate('/wall');
-    } catch (err) {
-      setError(err.message || 'Login failed');
-    } finally {
-      setLoading(false);
+    if (password === ADMIN_PASSWORD) {
+      localStorage.setItem('vibecon_admin_auth', 'true');
+      navigate('/admin');
+    } else {
+      setError('Incorrect password');
     }
   };
 
@@ -43,27 +35,12 @@ export default function Login() {
       >
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 mb-3">
-            <div className="h-9 w-9 rounded-lg bg-vibe-orange flex items-center justify-center text-white font-black">V</div>
-            <span className="font-black text-xl">VibeCon 2026</span>
+            <img src={vibeconLogo} alt="VibeCon" className="h-8" />
           </div>
           <p className="text-xs font-black uppercase tracking-widest text-gray-500">Host Login</p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-gray-600 mb-1.5">
-              Email
-            </label>
-            <input
-              type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
-              placeholder="admin@emergent"
-              className="w-full px-4 py-2.5 rounded-lg border-2 border-gray-200 focus:border-vibe-orange focus:outline-none font-semibold text-sm"
-            />
-          </div>
-
           <div>
             <label className="block text-xs font-black uppercase tracking-wider text-gray-600 mb-1.5">
               Password
@@ -72,8 +49,9 @@ export default function Login() {
               <input
                 type={showPw ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setError(''); }}
                 autoComplete="current-password"
+                placeholder="Enter admin password"
                 className="w-full px-4 py-2.5 pr-10 rounded-lg border-2 border-gray-200 focus:border-vibe-orange focus:outline-none font-semibold text-sm"
               />
               <button
@@ -95,10 +73,10 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={!canSubmit}
+            disabled={!password}
             className="w-full py-3 rounded-lg bg-vibe-orange text-white font-black shadow-lg shadow-orange-200 hover:scale-[1.01] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            {loading ? 'Signing in…' : 'Sign In to Wall'}
+            Sign In
           </button>
         </form>
       </motion.div>

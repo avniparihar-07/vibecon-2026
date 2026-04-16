@@ -7,6 +7,7 @@ import Guide from './pages/Guide.jsx';
 import WallInteract from './pages/WallInteract.jsx';
 import Login from './pages/Login.jsx';
 import Wall from './pages/Wall.jsx';
+import Admin from './pages/Admin.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -17,11 +18,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/guide" element={<Guide />} />
         <Route path="/wall-interact" element={<WallInteract />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/wall" element={<Wall />} />
         <Route
-          path="/wall"
+          path="/admin"
           element={
             <ProtectedRoute>
-              <Wall />
+              <Admin />
             </ProtectedRoute>
           }
         />
