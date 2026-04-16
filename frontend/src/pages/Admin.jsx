@@ -195,10 +195,16 @@ export default function Admin() {
           <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[9px] font-black uppercase tracking-widest">Admin</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <img src={emergentLogo} alt="Emergent" className="h-8 rounded-md" />
-          <span className="text-sm font-black uppercase tracking-wider opacity-70">×</span>
-          <img src={polarisLogo} alt="Polaris" className="h-8 rounded-md" />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <img src={emergentLogo} alt="Emergent" className="h-8 rounded-md" />
+            <span className="text-xs font-black" style={{ color: theme.headerText }}>Emergent</span>
+          </div>
+          <span className="text-sm font-black opacity-50">×</span>
+          <div className="flex items-center gap-1.5">
+            <img src={polarisLogo} alt="Polaris" className="h-8 rounded-md" />
+            <span className="text-xs font-black" style={{ color: theme.headerText }}>Polaris</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 text-[11px] font-bold">
