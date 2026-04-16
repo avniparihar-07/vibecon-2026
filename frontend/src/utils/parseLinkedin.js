@@ -1,5 +1,4 @@
-// Extracts LinkedIn post identifier including the URN type.
-// Returns "activity:123456" or "ugcPost:123456" or "share:123456"
+// ---- LinkedIn ----
 const URN_PATTERNS = [
   { regex: /activity[:\-](\d{15,22})/i, type: 'activity' },
   { regex: /ugcPost[:\-](\d{15,22})/i, type: 'ugcPost' },
@@ -20,14 +19,46 @@ export const isValidLinkedInPostUrl = (url) => {
   return url.toLowerCase().includes('linkedin.com') && !!extractActivityId(url);
 };
 
-// Builds embed URL from stored activity_id.
-// Handles both new format "ugcPost:123" and legacy plain number "123".
 export const buildEmbedUrl = (activityId) => {
   if (!activityId) return null;
   if (activityId.includes(':')) {
     const [type, id] = activityId.split(':');
     return `https://www.linkedin.com/embed/feed/update/urn:li:${type}:${id}`;
   }
-  // Legacy: plain number defaults to activity
   return `https://www.linkedin.com/embed/feed/update/urn:li:activity:${activityId}`;
 };
+
+// ---- X / Twitter ----
+const TWEET_REGEX = /(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/i;
+
+export const extractTweetId = (url) => {
+  if (!url) return null;
+  const match = url.match(TWEET_REGEX);
+  return match ? match[1] : null;
+};
+
+export const isValidTweetUrl = (url) => {
+  if (!url) return false;
+  return (url.toLowerCase().includes('x.com/') || url.toLowerCase().includes('twitter.com/')) && !!extractTweetId(url);
+};
+
+export const buildTweetEmbedUrl = (tweetId) => {
+  if (!tweetId) return null;
+  return `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=light&dnt=true`;
+};
+
+// ---- Universal ----
+// Returns { platform, id } or null
+export const parsePostUrl = (url) => {
+  if (!url) return null;
+
+  const activityId = extractActivityId(url);
+  if (activityId) return { platform: 'linkedin', id: activityId };
+
+  const tweetId = extractTweetId(url);
+  if (tweetId) return { platform: 'x', id: `tweet:${tweetId}` };
+
+  return null;
+};
+
+export const isValidPostUrl = (url) => !!parsePostUrl(url);

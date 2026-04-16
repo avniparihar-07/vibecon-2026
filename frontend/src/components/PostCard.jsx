@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react';
-import { buildEmbedUrl } from '../utils/parseLinkedin.js';
+import { buildEmbedUrl, buildTweetEmbedUrl } from '../utils/parseLinkedin.js';
 
 const COLORS = ['#FF6347', '#0A66C2', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'];
 
@@ -10,9 +10,18 @@ const colorFor = (id) => {
   return COLORS[h % COLORS.length];
 };
 
+function getEmbedUrl(activityId) {
+  if (!activityId) return null;
+  if (activityId.startsWith('tweet:')) {
+    const tweetId = activityId.replace('tweet:', '');
+    return { url: buildTweetEmbedUrl(tweetId), platform: 'x' };
+  }
+  return { url: buildEmbedUrl(activityId), platform: 'linkedin' };
+}
+
 export default function PostCard({ post, theme, onDelete }) {
   const accentColor = post.color || colorFor(post.id);
-  const embedUrl = buildEmbedUrl(post.activity_id);
+  const embed = getEmbedUrl(post.activity_id);
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -39,10 +48,10 @@ export default function PostCard({ post, theme, onDelete }) {
         </button>
       )}
 
-      {embedUrl ? (
+      {embed?.url ? (
         <iframe
-          src={embedUrl}
-          title="LinkedIn post"
+          src={embed.url}
+          title={`${embed.platform === 'x' ? 'X' : 'LinkedIn'} post`}
           className="w-full h-full border-0 rounded-2xl"
           allowFullScreen
         />

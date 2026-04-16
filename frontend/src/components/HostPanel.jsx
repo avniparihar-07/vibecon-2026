@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Link2, QrCode, Settings, Download, X, Check, Loader2 } from 'lucide-react';
 import { supabase } from '../utils/supabase.js';
-import { extractActivityId } from '../utils/parseLinkedin.js';
+import { parsePostUrl } from '../utils/parseLinkedin.js';
 
 const QR_BASE = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=';
 
@@ -37,13 +37,13 @@ export default function HostPanel({ onLogout }) {
     setLinkError('');
     setLinkSuccess(false);
     if (!linkUrl.trim()) {
-      setLinkError('LinkedIn URL is required.');
+      setLinkError('Paste a LinkedIn or X post URL.');
       return;
     }
 
-    const activityId = extractActivityId(linkUrl.trim());
-    if (!activityId) {
-      setLinkError('Could not extract post ID from URL.');
+    const parsed = parsePostUrl(linkUrl.trim());
+    if (!parsed) {
+      setLinkError('Could not extract post ID. Supports LinkedIn & X URLs.');
       return;
     }
 
@@ -52,7 +52,7 @@ export default function HostPanel({ onLogout }) {
       const { error } = await supabase.from('posts').insert({
         name: 'Admin',
         linkedin_url: linkUrl.trim(),
-        activity_id: activityId,
+        activity_id: parsed.id,
         composed_text: '',
         scraped_meta: null,
       });
@@ -101,7 +101,7 @@ export default function HostPanel({ onLogout }) {
                 <input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="Paste LinkedIn post URL"
+                  placeholder="Paste LinkedIn or X post URL"
                   className="w-full px-3 py-1.5 rounded-md bg-white/10 border border-white/20 text-sm font-semibold placeholder:text-white/40 focus:outline-none focus:border-white/50"
                 />
                 {linkError && (
