@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
+import { buildEmbedUrl } from '../utils/parseLinkedin.js';
 
 const COLORS = ['#FF6347', '#0A66C2', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'];
 
@@ -12,9 +13,7 @@ const colorFor = (id) => {
 
 export default function PostCard({ post, theme, displayMode, onDelete }) {
   const accentColor = post.color || colorFor(post.id);
-  const embedUrl = post.activity_id
-    ? `https://www.linkedin.com/embed/feed/update/urn:li:activity:${post.activity_id}`
-    : null;
+  const embedUrl = buildEmbedUrl(post.activity_id);
 
   const handleDelete = (e) => {
     e.stopPropagation();
