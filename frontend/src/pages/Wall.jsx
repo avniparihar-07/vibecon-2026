@@ -3,6 +3,8 @@ import PostCard from '../components/PostCard.jsx';
 import { useWallPosts } from '../hooks/useWallPosts.js';
 import { THEMES, DEFAULT_THEME_KEY } from '../themes/themes.js';
 import vibeconLogo from '../assets/vibecon-logo.svg';
+import emergentLogo from '../assets/emergent-logo.jpeg';
+import polarisLogo from '../assets/polaris-logo.jpeg';
 
 const SPONSORS = [
   'Emergent', 'Polaris School of Technology', 'OpenAI', 'MongoDB', 'AWS', 'Razorpay',
@@ -127,19 +129,14 @@ export default function Wall() {
           <img src={vibeconLogo} alt="VibeCon" className="h-7" />
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: theme.live }} />
-            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: theme.live }}>
-              LIVE
-            </span>
-          </div>
-          <span className="text-xs font-bold opacity-70">300 BUILDERS</span>
+        <div className="flex items-center gap-2">
+          <img src={emergentLogo} alt="Emergent" className="h-8 rounded-md" />
+          <span className="text-sm font-black uppercase tracking-wider opacity-70">×</span>
+          <img src={polarisLogo} alt="Polaris" className="h-8 rounded-md" />
         </div>
 
         <div className="flex items-center gap-3 text-[11px] font-bold">
           <Clock />
-          <span className="opacity-60">Emergent x Polaris</span>
           <span className="px-2 py-0.5 rounded-full bg-vibe-orange text-white">16 APR 2026</span>
         </div>
       </header>
