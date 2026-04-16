@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PostCard from '../components/PostCard.jsx';
 import ParticleCanvas from '../components/ParticleCanvas.jsx';
 import { useWallPosts } from '../hooks/useWallPosts.js';
@@ -12,7 +12,7 @@ const SPONSORS = [
 
 const CARD_WIDTH = 380;
 const CARD_GAP = 20;
-const SCROLL_SPEED_PER_CARD = 8; // seconds per card
+const SCROLL_PX_PER_SEC = 35;
 
 function Clock() {
   const [now, setNow] = useState(() => new Date());
@@ -23,15 +23,92 @@ function Clock() {
   return <span>{now.toTimeString().slice(0, 8)}</span>;
 }
 
+function ScrollBanner({ posts, theme }) {
+  const trackRef = useRef(null);
+  const offsetRef = useRef(0);
+  const prevTimeRef = useRef(null);
+
+  useEffect(() => {
+    if (posts.length < 4) return;
+
+    let raf;
+    const tick = (timestamp) => {
+      if (!trackRef.current) { raf = requestAnimationFrame(tick); return; }
+      if (prevTimeRef.current === null) prevTimeRef.current = timestamp;
+
+      const delta = (timestamp - prevTimeRef.current) / 1000;
+      prevTimeRef.current = timestamp;
+
+      offsetRef.current += SCROLL_PX_PER_SEC * delta;
+
+      // Each "set" of posts has this total width
+      const setWidth = posts.length * (CARD_WIDTH + CARD_GAP);
+      if (offsetRef.current >= setWidth) {
+        offsetRef.current -= setWidth;
+      }
+
+      trackRef.current.style.transform = `translateX(-${offsetRef.current}px)`;
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [posts.length]);
+
+  if (posts.length === 0) {
+    return (
+      <div className="w-full text-center">
+        <p className="text-lg font-black uppercase tracking-widest opacity-30" style={{ color: theme.headerText }}>
+          Waiting for posts...
+        </p>
+      </div>
+    );
+  }
+
+  if (posts.length < 4) {
+    return (
+      <div
+        className="flex items-stretch justify-center w-full"
+        style={{ gap: `${CARD_GAP}px`, padding: `0 ${CARD_GAP}px` }}
+      >
+        {posts.map((post) => (
+          <div
+            key={post.id}
+            className="shrink-0"
+            style={{ width: `${CARD_WIDTH}px`, height: 'calc(100vh - 56px - 48px - 40px)' }}
+          >
+            <PostCard post={post} theme={theme} onDelete={null} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={trackRef}
+      className="flex items-stretch"
+      style={{ gap: `${CARD_GAP}px`, paddingLeft: `${CARD_GAP}px` }}
+    >
+      {[...posts, ...posts].map((post, i) => (
+        <div
+          key={`${post.id}-${i}`}
+          className="shrink-0"
+          style={{ width: `${CARD_WIDTH}px`, height: 'calc(100vh - 56px - 48px - 40px)' }}
+        >
+          <PostCard post={post} theme={theme} onDelete={null} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Wall() {
   const [themeKey] = useState(() =>
     localStorage.getItem('vibecon_theme') || DEFAULT_THEME_KEY
   );
   const theme = THEMES[themeKey] || THEMES[DEFAULT_THEME_KEY];
   const { posts } = useWallPosts();
-
-  const shouldScroll = posts.length >= 4;
-  const scrollDuration = `${posts.length * SCROLL_SPEED_PER_CARD}s`;
 
   return (
     <div
@@ -76,49 +153,7 @@ export default function Wall() {
 
       {/* Scrolling post banner */}
       <main className="relative z-10 flex-1 flex items-center overflow-hidden">
-        {posts.length === 0 ? (
-          <div className="w-full text-center">
-            <p className="text-lg font-black uppercase tracking-widest opacity-30" style={{ color: theme.headerText }}>
-              Waiting for posts...
-            </p>
-          </div>
-        ) : shouldScroll ? (
-          <div
-            className="flex animate-wall-scroll items-stretch"
-            style={{
-              '--scroll-duration': scrollDuration,
-              gap: `${CARD_GAP}px`,
-              paddingLeft: `${CARD_GAP}px`,
-            }}
-          >
-            {/* Render posts twice for seamless loop */}
-            {[...posts, ...posts].map((post, i) => (
-              <div
-                key={`${post.id}-${i}`}
-                className="shrink-0"
-                style={{ width: `${CARD_WIDTH}px`, height: 'calc(100vh - 56px - 48px - 40px)' }}
-              >
-                <PostCard post={post} theme={theme} onDelete={null} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* Fewer than 4 posts — show centered static */
-          <div
-            className="flex items-stretch justify-center w-full"
-            style={{ gap: `${CARD_GAP}px`, padding: `0 ${CARD_GAP}px` }}
-          >
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="shrink-0"
-                style={{ width: `${CARD_WIDTH}px`, height: 'calc(100vh - 56px - 48px - 40px)' }}
-              >
-                <PostCard post={post} theme={theme} onDelete={null} />
-              </div>
-            ))}
-          </div>
-        )}
+        <ScrollBanner posts={posts} theme={theme} />
       </main>
 
       {/* Sponsor ticker */}
